@@ -35,5 +35,5 @@ fn undo_edit(db: &mut Database, uuid: Uuid, old_description: String) {
 
 fn undo_finish(db: &mut Database, uuid: Uuid) {
     let todo = db.todos.get_mut(&uuid).unwrap();
-    todo.finished = false;
+    todo.finished_at = None;
 }

@@ -43,7 +43,11 @@ pub fn save_database(database: Database, path: impl AsRef<Path>) -> eyre::Result
 }
 
 pub fn create_pending_array(db: &Database) -> Vec<&Todo> {
-    let mut array: Vec<_> = db.todos.values().filter(|todo| !todo.finished).collect();
+    let mut array: Vec<_> = db
+        .todos
+        .values()
+        .filter(|todo| !todo.is_finished())
+        .collect();
     array.sort_by_key(|todo| todo.created_at);
     array
 }
