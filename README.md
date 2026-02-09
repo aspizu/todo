@@ -44,5 +44,5 @@ Use `--list` to specify a different file. Use aliases to manage multiple todo li
 
 ```shell
 alias t='todo --list ~/.todos'
-alias gt='todo --list .git/.todos'
+alias gt='todo --list $(git rev-parse --show-toplevel)/.git/.todos'
 ```
