@@ -4,6 +4,7 @@ use std::{
     path::Path,
 };
 
+use eyre::bail;
 use serde::{
     Deserialize,
     Serialize,
@@ -45,4 +46,12 @@ pub fn create_pending_array(db: &Database) -> Vec<&Todo> {
     let mut array: Vec<_> = db.todos.values().filter(|todo| !todo.finished).collect();
     array.sort_by_key(|todo| todo.created_at);
     array
+}
+
+pub fn get_todo_id_by_index(db: &Database, index: usize) -> eyre::Result<Uuid> {
+    let pending = create_pending_array(db);
+    if index == 0 || index > pending.len() {
+        bail!("id not found");
+    }
+    Ok(pending[index - 1].id)
 }

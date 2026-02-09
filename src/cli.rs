@@ -16,7 +16,9 @@ use eyre::bail;
 
 use crate::{
     db::{
+        Database,
         create_pending_array,
+        get_todo_id_by_index,
         load_database,
         save_database,
     },
@@ -63,11 +65,7 @@ pub fn run() -> eyre::Result<()> {
     let dbpath = cli.list.unwrap_or(".todos".into());
     let mut db = load_database(&dbpath)?;
     if let Some(id) = cli.finish {
-        let pending = create_pending_array(&db);
-        if id == 0 || id > pending.len() {
-            bail!("id not found");
-        }
-        let id = pending[id - 1].id;
+        let id = get_todo_id_by_index(&db, id)?;
         finish_todo(&mut db, id);
     } else if let Some(id) = cli.edit {
         let new_description = cli.args.join(" ");
@@ -75,11 +73,7 @@ pub fn run() -> eyre::Result<()> {
         if new_description.is_empty() {
             bail!("missing new description");
         }
-        let pending = create_pending_array(&db);
-        if id == 0 || id > pending.len() {
-            bail!("id not found");
-        }
-        let id = pending[id - 1].id;
+        let id = get_todo_id_by_index(&db, id)?;
         edit_todo(&mut db, id, new_description.to_owned());
     } else if cli.undo {
         let Some(operation) = db.operations.pop() else {
@@ -88,22 +82,26 @@ pub fn run() -> eyre::Result<()> {
         undo_operation(&mut db, operation);
     } else {
         let description = cli.args.join(" ");
-        let description = description.trim();
+        let description = description.trim().replace('\n', " ");
         if description.is_empty() {
-            let now = Utc::now();
-            let pending = create_pending_array(&db);
-            for (i, todo) in pending.iter().enumerate() {
-                println!(
-                    "{:>4} ☐ {} {}",
-                    i + 1,
-                    todo.description.bold(),
-                    format_duration(now - todo.created_at).dimmed()
-                );
-            }
+            list_todos(&db);
         } else {
-            add_todo(&mut db, description.to_owned());
+            add_todo(&mut db, description);
         }
     }
     save_database(db, dbpath)?;
     Ok(())
+}
+
+fn list_todos(db: &Database) {
+    let now = Utc::now();
+    let pending = create_pending_array(&db);
+    for (i, todo) in pending.iter().enumerate() {
+        println!(
+            "{:>4} ☐ {} {}",
+            i + 1,
+            todo.description.bold(),
+            format_duration(now - todo.created_at).dimmed()
+        );
+    }
 }
